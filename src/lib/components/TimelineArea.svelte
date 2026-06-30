@@ -11,17 +11,22 @@
     import ArrowOverlay from './ArrowOverlay.svelte'
     import KeyIcon from './KeyIcon.svelte'
     import ComboNumbers from './ComboNumbers.svelte'
+    import StrongBadge from './StrongBadge.svelte'
 
     let {
         selectedKey,
         selectedMode,
         comboA = 0,
         comboB = 0,
+        strong = false,
+        comment = '',
     }: {
         selectedKey: KeyType
         selectedMode: KeyMode
         comboA?: number
         comboB?: number
+        strong?: boolean
+        comment?: string
     } = $props()
 
     let viewportWidth = $state(
@@ -64,6 +69,10 @@
             blockRightEdge || Math.max(...blocks.map((b) => b.x)) + 120
         return Math.max(viewportWidth, rightEdge + viewportWidth / 2)
     })
+
+    let strongBadgeColor = $derived(
+        planner.theme.key === 'light' ? '#000000' : '#ef4444',
+    )
 
     let contextBlock = $state<ActionBlock | null>(null)
     let contextPos = $state({ x: 0, y: 0 })
@@ -248,6 +257,8 @@
             keyOp.comboStart = comboA
             keyOp.comboEnd = comboB
         }
+        if (strong) keyOp.strong = true
+        if (comment) keyOp.comment = comment
         const maxX = Math.max(
             ...planner.characters.map((c) => {
                 const cBlocks = planner.getCharacterBlocks(c.id)
@@ -322,6 +333,8 @@
                             {selectedMode}
                             {comboA}
                             {comboB}
+                            {strong}
+                            {comment}
                             oneditBlock={() => {}}
                             oncontextBlock={handleContext}
                             oncloseContext={() => {
@@ -444,7 +457,12 @@
                                             style="color: {planner.theme
                                                 .mutedText};">⠿</span
                                         >
-                                        <span class="inline-flex items-center">
+                                        <span class="inline-flex items-center relative">
+                                            {#if op.strong}
+                                                <div class="absolute -left-1.5 -top-3 z-10">
+                                                    <StrongBadge size={10} color={strongBadgeColor} />
+                                                </div>
+                                            {/if}
                                             <KeyIcon
                                                 key={op.key}
                                                 size="sm"
@@ -456,6 +474,9 @@
                                         </span>
                                         {#if op.comboStart && op.comboEnd && op.comboStart > 0 && op.comboEnd > 0}
                                             <ComboNumbers start={op.comboStart} end={op.comboEnd} theme={planner.theme} />
+                                        {/if}
+                                        {#if op.comment}
+                                            <span class="text-[10px] ml-0.5 rounded px-1" style="background: {planner.theme.key === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}; color: {planner.theme.key === 'light' ? '#000000' : '#ffffff'};">{op.comment}</span>
                                         {/if}
                                         <span
                                             class="flex-1 text-xs"
@@ -493,15 +514,64 @@
                             {/each}
                             {#if contextBlock.keyOps.some((op) => op.key === 'intro')}
                                 <div
-                                    class="flex items-center gap-1.5 px-1.5 py-1"
+                                    class="flex items-center justify-between gap-1.5 px-1.5 py-1"
                                     style="color: {planner.theme.accentText};"
                                 >
-                                    <KeyIcon
-                                        key="intro"
-                                        size="sm"
-                                        color={planner.theme.nodeColors.intro}
-                                    />
-                                    <span class="text-xs">变奏入场</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <KeyIcon
+                                            key="intro"
+                                            size="sm"
+                                            color={planner.theme.nodeColors.intro}
+                                        />
+                                        <span class="text-xs">变奏入场</span>
+                                    </div>
+                                    <button
+                                        class="rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors"
+                                        style="border-color: {planner.theme
+                                            .border}; color: {planner.theme
+                                            .textSecondary};"
+                                        onmouseenter={(e) => {
+                                            ;(e.currentTarget as HTMLElement).style.background =
+                                                planner.theme.buttonHover
+                                        }}
+                                        onmouseleave={(e) => {
+                                            ;(e.currentTarget as HTMLElement).style.background = ''
+                                        }}
+                                        onclick={(e) => {
+                                            e.stopPropagation()
+                                            const introIdx =
+                                                contextBlock!.keyOps.findIndex(
+                                                    (o) => o.key === 'intro',
+                                                )
+                                            if (introIdx < 0) return
+                                            const ops = [
+                                                ...contextBlock!.keyOps,
+                                            ]
+                                            ops[introIdx] = {
+                                                ...ops[introIdx],
+                                                strong: !ops[introIdx].strong,
+                                            }
+                                            planner.updateBlock(
+                                                contextBlock!.id,
+                                                {
+                                                    keyOps: ops,
+                                                },
+                                            )
+                                            const updated =
+                                                planner.blocks.find(
+                                                    (b) =>
+                                                        b.id ===
+                                                        contextBlock!.id,
+                                                )
+                                            if (updated)
+                                                contextBlock = updated
+                                        }}
+                                    >
+                                        {contextBlock.keyOps.find((o) => o.key === 'intro')
+                                            ?.strong
+                                            ? '设为普通变奏'
+                                            : '设为强化变奏'}
+                                    </button>
                                 </div>
                             {/if}
                         </div>

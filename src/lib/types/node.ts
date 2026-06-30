@@ -24,6 +24,8 @@ export interface KeyOperation {
     mode: KeyMode
     comboStart?: number
     comboEnd?: number
+    strong?: boolean
+    comment?: string
 }
 
 export interface IconTextPair {

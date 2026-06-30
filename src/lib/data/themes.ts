@@ -174,7 +174,7 @@ export const PRESET_THEMES: Theme[] = [
         deleteBtnHover: 'rgba(0,0,0,0.05)',
         alertBtnBg: '#2563eb',
         confirmBtnBg: '#dc2626',
-        exportBg: '#f0f4f8',
+        exportBg: '#ffffff',
         panelBg: '#f0f4f8',
         ringOffset: '#ffffff',
         keyIconPath: '/images/keys-light/',

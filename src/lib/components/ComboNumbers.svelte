@@ -15,13 +15,12 @@
         return arr.join('');
     });
 
-    let bg = $derived(theme.comboBg || (theme.key === 'dark' ? '#e4e4e7' : '#fafafa'));
-    let bd = $derived(theme.comboBorder || (theme.key === 'dark' ? '#a1a1aa' : '#a3a3a3'));
-    let fg = $derived(theme.comboText || (theme.key === 'dark' ? '#18181b' : '#0a0a0a'));
+    let bgColor = $derived(theme.key === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)');
+    let textColor = $derived(theme.key === 'light' ? '#000000' : '#ffffff');
 </script>
 
 {#if nums}
     <span class="-ml-2 pl-2 pr-1 rounded h-5 flex items-center font-black"
-        style="border-top: 1.5px solid {bd}; border-right: 1.5px solid {bd}; border-bottom: 1.5px solid {bd}; font-size: 10px; padding-top: 0; padding-bottom: 0; background: linear-gradient(to right, transparent 0%, {bg} 25%, {bg} 100%); color: {fg};"
+        style="font-size: 10px; padding-top: 0; padding-bottom: 0; background: {bgColor}; color: {textColor};"
     >{nums}</span>
 {/if}

@@ -69,37 +69,45 @@ function resolveCharAliases(
 
 function keyOpText(op: KeyOperation): string {
     const k = op.key === 'Z' ? 'LMB' : op.key
+    const kLabel = k === 'X' ? '下落' : k === 'F' ? '处决' : k
     const m = op.mode
 
     let base: string
     if (m === 'preinput_swap' || m === 'preinput_action') {
-        if (k === 'LMB') base = '预Z'
-        else if (k === 'RMB') base = '预闪'
-        else if (k === 'jump') base = '预跳'
-        else base = '预' + k
+        if (k === 'LMB') base = '预输入Z'
+        else if (k === 'RMB') base = '预输入闪'
+        else if (k === 'jump') base = '预输入跳'
+        else base = '预输入' + kLabel
     } else if (m === 'rapid_click') {
         if (k === 'LMB') base = '狂按a'
         else if (k === 'RMB') base = '狂按闪'
         else if (k === 'jump') base = '狂按跳'
-        else base = '狂按' + k
+        else base = '狂按' + kLabel
     } else if (m === 'hold') {
-        if (k === 'LMB') base = 'Z'
-        else if (k === 'RMB') base = '长闪'
-        else if (k === 'jump') base = '长跳'
-        else base = '长' + k
+        if (k === 'LMB') base = '长按Z'
+        else if (k === 'RMB') base = '长按闪'
+        else if (k === 'jump') base = '长按跳'
+        else base = '长按' + kLabel
     } else {
         if (k === 'LMB') base = 'a'
         else if (k === 'RMB') base = '闪'
         else if (k === 'jump') base = '跳'
-        else base = k
+        else base = kLabel
     }
 
+    if (op.strong) base = '强' + base
+
     if (op.comboStart && op.comboEnd && op.comboStart > 0 && op.comboEnd > 0) {
-        if (op.comboStart === op.comboEnd) return base + String(op.comboStart)
-        const nums: number[] = []
-        for (let n = op.comboStart; n <= op.comboEnd; n++) nums.push(n)
-        return base + nums.join('')
+        if (op.comboStart === op.comboEnd) base = base + String(op.comboStart)
+        else {
+            const nums: number[] = []
+            for (let n = op.comboStart; n <= op.comboEnd; n++) nums.push(n)
+            base = base + nums.join('')
+        }
     }
+
+    if (op.comment) base += '(' + op.comment + ')'
+
     return base
 }
 
@@ -165,7 +173,7 @@ export function buildTextDescription(items: TimelineItem[]): string {
     const parts: string[] = []
     for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        const ops = visibleOps(item.block.keyOps).map(keyOpText).join('')
+        const ops = opsText(item.block.keyOps, hasStrongIntro(item.block.keyOps))
         if (i === 0) {
             parts.push(`${item.alias}${ops}`)
         } else if (item.block.characterId === items[i - 1].block.characterId) {
@@ -182,11 +190,22 @@ export function buildTextDescription(items: TimelineItem[]): string {
 }
 
 function visibleOps(ops: KeyOperation[]): KeyOperation[] {
-    return ops.filter((op) => op.key !== 'intro')
+    return ops.filter((op) => op.key !== 'intro' && op.key !== 'V')
 }
 
-function opsText(ops: KeyOperation[]): string {
-    return visibleOps(ops).map(keyOpText).join('')
+function hasStrongIntro(ops: KeyOperation[]): boolean {
+    return ops.some((op) => op.key === 'intro' && op.strong)
+}
+
+function opsText(ops: KeyOperation[], strongIntro = false): string {
+    const s = visibleOps(ops)
+        .map(keyOpText)
+        .join('-')
+        .replace(/\)-/g, ') ')
+        .replace(/-\(/g, ' (')
+    const prefix = strongIntro ? '强变' : ''
+    if (!s && !prefix) return ''
+    return ' ' + prefix + s
 }
 
 export function buildCharLines(
@@ -202,7 +221,7 @@ export function buildCharLines(
         const alias = resolvedAliases[ci]
         const ops = charItems
             .map((it, i) => {
-                const opStr = opsText(it.block.keyOps)
+                const opStr = opsText(it.block.keyOps, hasStrongIntro(it.block.keyOps))
                 if (i === 0) return opStr
                 if (it.isSwitchIntro) return `，延奏${alias}${opStr}`
                 if (it.isSwitchStay) return `，切回${alias}${opStr}`
@@ -221,7 +240,7 @@ export function buildIntroLines(items: TimelineItem[]): string {
     let current: string[] = []
     for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        const opStr = opsText(item.block.keyOps)
+        const opStr = opsText(item.block.keyOps, hasStrongIntro(item.block.keyOps))
         const prev = i > 0 ? items[i - 1] : null
         if (item.isSwitchIntro) {
             if (current.length > 0) segments.push(current.join(''))

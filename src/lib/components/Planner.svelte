@@ -18,6 +18,8 @@
     let selectedMode = $state<KeyMode>('click')
     let comboA = $state(0)
     let comboB = $state(0)
+    let strong = $state(false)
+    let comment = $state('')
     let openCharTrigger = $state<{ index: number; nonce: number }>({
         index: -1,
         nonce: 0,
@@ -314,7 +316,7 @@
         </div>
         <div class="flex flex-1 flex-col min-h-0">
             <div class="flex-1 min-h-0 p-3 pb-0 overflow-hidden">
-                <TimelineArea {selectedKey} {selectedMode} {comboA} {comboB} />
+                <TimelineArea {selectedKey} {selectedMode} {comboA} {comboB} {strong} {comment} />
             </div>
 
             <div
@@ -328,6 +330,8 @@
                         bind:selectedMode
                         bind:comboA
                         bind:comboB
+                        bind:strong
+                        bind:comment
                     />
                 </div>
                 <div

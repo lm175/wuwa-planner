@@ -443,7 +443,7 @@
         if (!container) return
         try {
             const dataUrl = await toPng(container, {
-                backgroundColor: '#18181b',
+                backgroundColor: planner.theme.exportBg,
                 pixelRatio: 2,
             })
             const a = document.createElement('a')
@@ -597,7 +597,15 @@
             .theme.contextBorder}; background: {planner.theme.contextBg};"
     >
         <button
-            class="flex w-full items-center px-4 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-700"
+            class="flex w-full items-center px-4 py-2 text-left text-xs transition-colors"
+            style="color: {planner.theme.text};"
+            onmouseenter={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background =
+                    planner.theme.contextHover
+            }}
+            onmouseleave={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background = ''
+            }}
             onclick={handleDownload}>下载为图片</button
         >
     </div>

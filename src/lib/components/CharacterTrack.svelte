@@ -10,6 +10,8 @@
         selectedMode,
         comboA = 0,
         comboB = 0,
+        strong = false,
+        comment = '',
         oneditBlock,
         oncontextBlock,
         oncloseContext,
@@ -20,6 +22,8 @@
         selectedMode: KeyMode
         comboA?: number
         comboB?: number
+        strong?: boolean
+        comment?: string
         oneditBlock: (block: any) => void
         oncontextBlock: (block: any, e: MouseEvent) => void
         oncloseContext?: () => void
@@ -171,6 +175,8 @@
             keyOp.comboStart = cA
             keyOp.comboEnd = cB
         }
+        if (parsed.strong) keyOp.strong = true
+        if (parsed.comment) keyOp.comment = parsed.comment
         const x = Math.max(MIN_BLOCK_X, e.clientX - offset - 24)
 
         const snapTarget = findSnapTarget('', x)
@@ -243,6 +249,8 @@
             keyOp.comboStart = comboA
             keyOp.comboEnd = comboB
         }
+        if (strong) keyOp.strong = true
+        if (comment) keyOp.comment = comment
         const rightBlock = blocks.find((b) => b.x > clickX)
         const newBlock = planner.addBlock(character.id, clickX)
         planner.addKeyOp(newBlock.id, keyOp)

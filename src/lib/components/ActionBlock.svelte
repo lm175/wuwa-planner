@@ -90,6 +90,13 @@
                 >
                     <KeyOperationComp {op} {theme} draggable={true} />
                 </div>
+                {#if op.comment}
+                    <span
+                        class="text-[10px] font-medium whitespace-nowrap rounded px-1"
+                        style="background: {theme.key === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}; color: {theme.key === 'light' ? '#000000' : '#ffffff'};"
+                    >{op.comment}</span
+                    >
+                {/if}
                 {#if op.comboStart && op.comboEnd && op.comboStart > 0 && op.comboEnd > 0}
                     <ComboNumbers start={op.comboStart} end={op.comboEnd} {theme} />
                 {/if}

@@ -11,9 +11,6 @@
         getCharacterPresets,
         loadCharacterPresets,
     } from '$lib/data/characters'
-    import KeyIcon from './KeyIcon.svelte'
-    import ComboNumbers from './ComboNumbers.svelte'
-    import type { TimelineItem } from '$lib/utils/rotation-description'
     import type { CharacterPreset } from '$lib/types'
 
     let { fillHeight = false }: { fillHeight?: boolean } = $props()
@@ -37,9 +34,6 @@
     let copyMenuOpen = $state(false)
     let copyMenuX = $state(0)
     let copyMenuY = $state(0)
-    let diagramPanel = $state<HTMLDivElement | null>(null)
-    let textPanel = $state<HTMLDivElement | null>(null)
-    let syncing = $state(false)
 
     function onDocClick() {
         copyMenuOpen = false
@@ -78,152 +72,35 @@
         await navigator.clipboard.writeText(lines)
         copyMenuOpen = false
     }
-
-    function getBlockAvatarSrc(block: TimelineItem): string | null {
-        const char = planner.characters[block.charIndex]
-        if (!char?.presetId) return null
-        return `/images/avatars/${char.presetId}.png`
-    }
-
-    function modeBadge(
-        mode: string,
-        key: string,
-    ): { text: string; color: string } | null {
-        if (key === 'LMB' && (mode === 'hold' || mode === 'click')) return null
-        const color = planner.theme.nodeColors[mode]
-        if (mode === 'rapid_click') return { text: '狂', color }
-        if (mode === 'preinput_swap' || mode === 'preinput_action')
-            return { text: '预', color }
-        if (mode === 'hold') return { text: '长', color }
-        return null
-    }
-
-    function onDiagramScroll() {
-        if (syncing || !diagramPanel || !textPanel) return
-        syncing = true
-        textPanel.scrollTop = diagramPanel.scrollTop
-        syncing = false
-    }
-
-    function onTextScroll() {
-        if (syncing || !diagramPanel || !textPanel) return
-        syncing = true
-        diagramPanel.scrollTop = textPanel.scrollTop
-        syncing = false
-    }
 </script>
 
 <div
     class="flex flex-col min-w-0"
-    style={fillHeight ? 'flex: 1; min-height: 0;' : 'height: 240px;'}
+    style={fillHeight ? 'flex: 1; min-height: 0;' : 'height: 160px;'}
 >
-    <div class="flex h-full gap-3 min-w-0">
-        <div
-            bind:this={diagramPanel}
-            class="flex-1 min-w-0 overflow-y-auto overflow-x-hidden rounded-lg p-3"
-            style="border: 1px solid {planner.theme
-                .divider}; background: {planner.theme
-                .trackBg}; scrollbar-width: thin;"
-            onscroll={onDiagramScroll}
-        >
-            {#if merged.length === 0}
-                <div
-                    class="flex h-full items-center justify-center text-xs text-zinc-500"
-                >
-                    暂无排轴数据
-                </div>
-            {:else}
-                <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
-                    {#each merged as item, i (item.block.id)}
-                        <div
-                            class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs"
-                            style="border-color: {planner.theme
-                                .diagramItemBorder}; background: {planner.theme
-                                .trackBg};"
-                        >
-                            {#if item.isSwitchStay}
-                                <span
-                                    class="text-[10px] text-cyan-400 leading-none"
-                                    >(切回)</span
-                                >
-                            {/if}
-                            <div class="flex items-center gap-1">
-                                {#if getBlockAvatarSrc(item)}
-                                    <img
-                                        src={getBlockAvatarSrc(item)}
-                                        alt={item.alias}
-                                        class="h-4 w-4 shrink-0 rounded-full object-cover"
-                                    />
-                                {:else}
-                                    <div
-                                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-[10px] text-zinc-300"
-                                    >
-                                        {item.alias.charAt(0)}
-                                    </div>
-                                {/if}
-                            </div>
-                            {#each item.block.keyOps as op}
-                                <div class="inline-flex items-center">
-                                    <KeyIcon
-                                        key={op.key}
-                                        size="sm"
-                                        color={planner.theme.nodeColors[op.key]}
-                                        mode={op.mode}
-                                    />
-                                    {#each [modeBadge(op.mode, op.key)] as badge}
-                                        {#if badge}
-                                            <span
-                                                class="absolute -right-1 -top-1.5 flex h-3 min-w-3 items-center justify-center rounded px-0.5 text-[8px] leading-none font-bold"
-                                                style="background: {badge.color}; color: {planner
-                                                    .theme.badgeText};"
-                                                >{badge.text}</span
-                                            >
-                                        {/if}
-                                    {/each}
-                                </div>
-                                {#if op.comboStart && op.comboEnd && op.comboStart > 0 && op.comboEnd > 0}
-                                    <ComboNumbers start={op.comboStart} end={op.comboEnd} theme={planner.theme} />
-                                {/if}
-                            {/each}
-                        </div>
-                        {#if i < merged.length - 1}
-                            {#if merged[i + 1].block.characterId === item.block.characterId}
-                                <span class="text-zinc-600 font-medium">→</span>
-                            {/if}
-                        {/if}
-                    {/each}
-                </div>
-            {/if}
-        </div>
-
-        <div class="w-px bg-zinc-800 shrink-0"></div>
-
-        <div
-            bind:this={textPanel}
-            class="flex-1 min-w-0 overflow-y-auto rounded-lg p-3"
-            style="border: 1px solid {planner.theme
-                .divider}; background: {planner.theme
-                .trackBg}; scrollbar-width: thin;"
-            onscroll={onTextScroll}
-        >
-            {#if merged.length === 0}
-                <div
-                    class="flex h-full items-center justify-center text-xs"
-                    style="color: {planner.theme.mutedText};"
-                >
-                    暂无排轴数据
-                </div>
-            {:else}
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                    class="cursor-default whitespace-pre-wrap wrap-break-word text-sm select-text leading-relaxed font-medium"
-                    style="color: {planner.theme.text};"
-                    oncontextmenu={showCopyMenu}
-                >
-                    {text}
-                </div>
-            {/if}
-        </div>
+    <div
+        class="flex-1 min-w-0 overflow-y-auto rounded-lg p-3"
+        style="border: 1px solid {planner.theme
+            .divider}; background: {planner.theme
+            .trackBg}; scrollbar-width: thin;"
+    >
+        {#if merged.length === 0}
+            <div
+                class="flex h-full items-center justify-center text-xs"
+                style="color: {planner.theme.mutedText};"
+            >
+                暂无排轴数据
+            </div>
+        {:else}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+                class="cursor-default whitespace-pre-wrap wrap-break-word text-sm select-text leading-relaxed font-medium"
+                style="color: {planner.theme.text};"
+                oncontextmenu={showCopyMenu}
+            >
+                {text}
+            </div>
+        {/if}
     </div>
 </div>
 
