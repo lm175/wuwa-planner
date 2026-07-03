@@ -212,10 +212,7 @@
                     />
                 </div>
 
-                <div
-                    class="max-h-80 overflow-y-auto scrollbar-dark-thick px-3 pb-3"
-                    bind:this={listEl}
-                >
+                <div class="overflow-y-auto scrollbar-dark-thick px-3 pb-3 dropdown-list" bind:this={listEl}>
                     {#each [...grouped.entries()] as [element, presets]}
                         <div class="mb-2 mt-3" data-element={element}>
                             <div

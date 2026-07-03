@@ -96,7 +96,7 @@
 </script>
 
 <div
-    class="flex h-full flex-col rounded-lg p-2 sm:p-3"
+    class="action-palette flex flex-col rounded-lg p-2 sm:p-3 h-auto md:h-full overflow-x-auto min-w-[320px] sm:min-w-0"
     style="border: 1px solid {theme.border}; background: {theme.panelBg};"
 >
     <div class="mb-1.5 flex items-center justify-between shrink-0">
@@ -127,7 +127,7 @@
     </div>
 
     <div class="flex flex-1 flex-col gap-1 sm:gap-2 min-h-0">
-        <div class="flex-1 min-h-0">
+        <div class="key-section shrink-0 md:flex-1 md:min-h-0">
             <span
                 class="mb-1.5 block text-[11px] sm:text-xs font-semibold"
                 style="color: {theme.textSecondary};">按键</span
@@ -157,7 +157,7 @@
                             />
                         </div>
                         <span
-                            class="flex items-center font-bold text-[10px] sm:text-xs leading-tight"
+                            class="hidden sm:flex items-center font-bold text-[10px] sm:text-xs leading-tight"
                             style="color: {theme.textSecondary};">{kt.desc}</span
                         >
                     </button>
@@ -165,7 +165,7 @@
             </div>
         </div>
 
-        <div class="shrink-0 flex gap-2 sm:gap-3">
+        <div class="shrink-0 flex flex-col sm:flex-row gap-2 sm:gap-3">
             <div class="flex-3 min-w-0">
                 <span
                     class="mb-1.5 block text-xs font-semibold"

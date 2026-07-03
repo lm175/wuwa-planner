@@ -55,7 +55,17 @@
             })
         }, 5000)
 
-        return () => clearInterval(saveTimer)
+        const mql = window.matchMedia('(max-width: 767px)')
+        sidebarCollapsed = mql.matches
+        const handleChange = (e) => {
+            sidebarCollapsed = e.matches
+        }
+        mql.addEventListener('change', handleChange)
+
+        return () => {
+            clearInterval(saveTimer)
+            mql.removeEventListener('change', handleChange)
+        }
     })
 
     let titleValue = $state('')
@@ -300,15 +310,15 @@
             >
         </div>
         <div class="flex flex-1 flex-col min-h-0">
-            <div class="flex-1 min-h-0 p-3 pb-0 overflow-hidden">
+            <div class="flex-1 min-h-0 p-3 pb-0 overflow-hidden timeline-area">
                 <TimelineArea {selectedKey} {selectedMode} {comboA} {comboB} {strong} {comment} />
             </div>
 
             <div
-                class="flex gap-3 px-4 py-4 min-w-0 min-h-[50vh]"
+                class="bottom-panel flex gap-3 px-4 py-4 min-w-0 flex-col md:flex-row min-h-[50vh]"
                 style="border-top: 1px solid {planner.theme.border};"
             >
-                <div class="min-w-0 flex-1">
+                <div class="min-w-[320px] flex-1 overflow-y-auto overflow-x-auto max-h-[40vh] min-h-[150px] md:max-h-none">
                     <ActionPalette
                         theme={planner.theme}
                         bind:selectedKey
@@ -320,9 +330,8 @@
                     />
                 </div>
                 <div
-                    class="relative flex min-w-0 flex-col rounded-lg px-4 py-3"
-                    style="border: 1px solid {planner.theme.border}; background: {planner.theme
-                        .panelBg};"
+                    class="relative flex min-w-[320px] md:min-w-0 flex-col rounded-lg px-4 py-3 overflow-y-auto max-h-[40vh] md:max-h-none"
+                    style="border: 1px solid {planner.theme.border}; background: {planner.theme.panelBg};"
                 >
                     <div class="mb-2 flex items-center justify-between">
                         <span

@@ -224,8 +224,8 @@
 </script>
 
 <div
-    class="flex flex-col gap-3"
-    style="min-width: 360px; max-height: 500px; --scrollbar-track: {t.scrollbarTrack}; --scrollbar-thumb: {t.scrollbarThumb}; --scrollbar-thumb-hover: {t.scrollbarThumbHover};"
+    class="flex flex-col gap-3 w-full overflow-x-auto"
+    style="max-width: 600px; max-height: 75vh; min-width: 0; --scrollbar-track: {t.scrollbarTrack}; --scrollbar-thumb: {t.scrollbarThumb}; --scrollbar-thumb-hover: {t.scrollbarThumbHover};"
 >
     {#if showEditor}
         {#if editingTheme}

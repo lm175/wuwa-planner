@@ -251,7 +251,7 @@
             {#each blocks as block (block.id)}
                 <div
                     class="absolute"
-                    style="left: {block.x}px; top: 0;"
+                    style="left: {block.x}px; top: 0; touch-action: none;"
                     onpointerdown={(e) => handleBlockPointerDown(e, block.id)}
                 >
                     <ActionBlockComp
