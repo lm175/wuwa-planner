@@ -149,7 +149,12 @@ function createPlannerStore() {
         const newVal = !block.isIntro
         blocks = blocks.map((b) => {
             if (b.id !== blockId) return b
-            const updated = { ...b, isIntro: newVal, introOverride: newVal }
+            const updated = {
+                ...b,
+                isIntro: newVal,
+                introOverride: newVal,
+                isOffHand: newVal ? false : b.isOffHand,
+            }
             if (newVal) {
                 stayFieldMarkers = stayFieldMarkers.filter(
                     (m) => m.fromBlockId !== b.id && m.toBlockId !== b.id,
@@ -182,6 +187,16 @@ function createPlannerStore() {
             if (c.id === srcId) return { ...c, presetId: target.presetId, name: target.name }
             if (c.id === targetId) return { ...c, presetId: src.presetId, name: src.name }
             return c
+        })
+        blocks = blocks.map((b) => {
+            if (b.characterId === srcId) return { ...b, characterId: targetId }
+            if (b.characterId === targetId) return { ...b, characterId: srcId }
+            return b
+        })
+        stayFieldMarkers = stayFieldMarkers.map((m) => {
+            if (m.characterId === srcId) return { ...m, characterId: targetId }
+            if (m.characterId === targetId) return { ...m, characterId: srcId }
+            return m
         })
     }
 

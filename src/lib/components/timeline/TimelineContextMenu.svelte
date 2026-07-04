@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { scale } from 'svelte/transition'
     import type { ActionBlock, KeyOperation } from '$lib/types'
     import { MODE_LABELS } from '$lib/data/labels'
     import { planner } from '$lib/stores/planner.svelte'
@@ -65,6 +66,7 @@
         class="fixed z-50 min-w-52 rounded-lg py-1.5 shadow-xl"
         style="left: {adjX}px; top: {adjY}px; border: 1px solid {planner.theme
             .contextBorder}; background: {planner.theme.contextBg};"
+        transition:scale={{ duration: 100, start: 0.95 }}
     >
         {#if contextBlock.keyOps.length > 0}
             <div style="border-bottom: 1px solid {planner.theme.divider};">
@@ -222,7 +224,9 @@
             class="flex w-full items-center px-4 py-2 text-left text-xs"
             style="color: {!hasPrev
                 ? planner.theme.mutedText
-                : planner.theme.accentText}; cursor: {!hasPrev ? 'not-allowed' : 'pointer'};"
+                : stayFieldActive
+                  ? planner.theme.dangerText
+                  : planner.theme.accentText}; cursor: {!hasPrev ? 'not-allowed' : 'pointer'};"
             disabled={!hasPrev}
             onmouseenter={(e) => {
                 if (hasPrev)

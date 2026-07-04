@@ -154,17 +154,13 @@
         }
     }
 
-    function getHandleAtLocal(mx: number, my: number): string | null {
-        return getHandleAt(mx, my, cropDispX, cropDispY, cropDispSize)
-    }
-
     function handleMousedown(e: MouseEvent) {
         if (!canvasEl) return
         const rect = canvasEl.getBoundingClientRect()
         const mx = e.clientX - rect.left
         const my = e.clientY - rect.top
 
-        const handle = getHandleAtLocal(mx, my)
+        const handle = getHandleAt(mx, my, cropDispX, cropDispY, cropDispSize)
         if (handle) {
             dragMode = handle as any
             dragStart = { mx, my, cx: cropX, cy: cropY, cs: cropSize }
@@ -268,10 +264,6 @@
             await tryClose()
         }
     }
-
-    function cursorStyleLocal() {
-        return cursorStyleUtil(dragMode)
-    }
 </script>
 
 <svelte:window
@@ -322,7 +314,7 @@
                     width={cw}
                     height={ch}
                     class="absolute inset-0"
-                    style="cursor: {cursorStyleLocal()};"
+                    style="cursor: {cursorStyleUtil(dragMode)};"
                     onmousedown={handleMousedown}
                     onwheel={handleWheel}
                 ></canvas>

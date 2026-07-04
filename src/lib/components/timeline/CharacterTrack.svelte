@@ -2,7 +2,8 @@
     import type { Character, KeyOperation, KeyType, KeyMode } from '$lib/types'
     import { planner } from '$lib/stores/planner.svelte'
     import ActionBlockComp from './ActionBlock.svelte'
-    import { findSnapTarget as findSnapTargetUtil } from '$lib/utils/timeline'
+    import { findSnapTarget } from '$lib/utils/timeline'
+    import { notification } from '$lib/stores/notification.svelte'
 
     let {
         character,
@@ -59,10 +60,6 @@
         isDragOver = false
     }
 
-    function findSnapTargetLocal(excludeBlockId: string, newX: number): string | null {
-        return findSnapTargetUtil(blocks, excludeBlockId, newX, SNAP_THRESHOLD)
-    }
-
     function handleDrop(e: DragEvent) {
         e.preventDefault()
         isDragOver = false
@@ -113,7 +110,7 @@
             const { fromBlockId, keyOp, keyOpIndex } = JSON.parse(moveData)
             const dropX = Math.max(MIN_BLOCK_X, e.clientX - offset - 24)
 
-            const snapTarget = findSnapTargetLocal('', dropX)
+            const snapTarget = findSnapTarget(blocks, '', dropX, SNAP_THRESHOLD)
             if (snapTarget) {
                 planner.removeKeyOp(fromBlockId, keyOpIndex)
                 planner.addKeyOp(snapTarget, keyOp)
@@ -145,7 +142,7 @@
         if (parsed.comment) keyOp.comment = parsed.comment
         const x = Math.max(MIN_BLOCK_X, e.clientX - offset - 24)
 
-        const snapTarget = findSnapTargetLocal('', x)
+        const snapTarget = findSnapTarget(blocks, '', x, SNAP_THRESHOLD)
         if (snapTarget) {
             planner.addKeyOp(snapTarget, keyOp)
         } else {
@@ -177,7 +174,7 @@
         const trackRect = trackEl.getBoundingClientRect()
         const x = Math.max(MIN_BLOCK_X, e.clientX - trackRect.left - dragState.offsetX)
 
-        const snapId = findSnapTargetLocal(dragState.blockId, x)
+        const snapId = findSnapTarget(blocks, dragState.blockId, x, SNAP_THRESHOLD)
         if (snapId) {
             const target = planner.blocks.find((b) => b.id === snapId)
             if (target) {
@@ -190,6 +187,23 @@
         }
     }
 
+    function validateStayFieldMarkers(charId: string) {
+        const charBlocks = planner.getCharacterBlocks(charId).toSorted((a, b) => a.x - b.x)
+        const validPairs = new Map<string, string>()
+        for (let i = 1; i < charBlocks.length; i++) {
+            validPairs.set(charBlocks[i].id, charBlocks[i - 1].id)
+        }
+        const invalid = planner.stayFieldMarkers.filter(
+            (m) => m.characterId === charId && validPairs.get(m.toBlockId) !== m.fromBlockId,
+        )
+        for (const m of invalid) {
+            planner.removeStayFieldMarker(m.id)
+        }
+        if (invalid.length > 0) {
+            notification.show(`因拖动调整位置，已自动断开 ${invalid.length} 个留场`)
+        }
+    }
+
     function handleTrackPointerUp() {
         if (!dragState || !trackEl) return
         trackEl.removeEventListener('pointermove', handleTrackPointerMove)
@@ -199,6 +213,7 @@
             planner.mergeBlocks(dragState.blockId, dragState.snapTargetId)
         }
 
+        validateStayFieldMarkers(character.id)
         dragState = null
     }
 

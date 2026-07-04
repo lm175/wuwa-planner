@@ -37,6 +37,12 @@ export function findSnapTarget(
     return null
 }
 
+export function canBeIntro(block: ActionBlock, blocks: ActionBlock[]): boolean {
+    const earlier = blocks.filter((b) => b.x < block.x).toSorted((a, b) => b.x - a.x)
+    if (earlier.length === 0) return true
+    return earlier[0].characterId !== block.characterId
+}
+
 export function computeSegments(
     allBlocks: ActionBlock[],
     containerWidth: number,

@@ -51,9 +51,15 @@
         copyMenuOpen = true
     }
 
+    async function copyDirect(e: MouseEvent) {
+        e.stopPropagation()
+        await navigator.clipboard.writeText(text)
+        copyMenuOpen = false
+    }
+
     async function copyByChar(e: MouseEvent) {
         e.stopPropagation()
-        const lines = buildCharLines(planner.characters, merged, presets)
+        const lines = buildCharLines(merged)
         await navigator.clipboard.writeText(lines)
         copyMenuOpen = false
     }
@@ -95,27 +101,25 @@
     </div>
 </div>
 
+{#snippet menuItem(action: (e: MouseEvent) => void, label: string)}
+    <button
+        class="flex w-full items-center px-4 py-2 text-left text-xs transition-colors"
+        style="color: {planner.theme.text};"
+        onmouseenter={(e) =>
+            ((e.currentTarget as HTMLElement).style.background = planner.theme.contextHover)}
+        onmouseleave={(e) => ((e.currentTarget as HTMLElement).style.background = '')}
+        onclick={action}>{label}</button
+    >
+{/snippet}
+
 {#if copyMenuOpen}
     <div
         class="fixed z-50 w-44 rounded-lg py-1 shadow-xl"
         style="left: {copyMenuX}px; top: {copyMenuY}px; border: 1px solid {planner.theme
             .contextBorder}; background: {planner.theme.contextBg};"
     >
-        <button
-            class="flex w-full items-center px-4 py-2 text-left text-xs transition-colors"
-            style="color: {planner.theme.text};"
-            onmouseenter={(e) =>
-                ((e.currentTarget as HTMLElement).style.background = planner.theme.contextHover)}
-            onmouseleave={(e) => ((e.currentTarget as HTMLElement).style.background = '')}
-            onclick={copyByChar}>复制（按角色分行）</button
-        >
-        <button
-            class="flex w-full items-center px-4 py-2 text-left text-xs transition-colors"
-            style="color: {planner.theme.text};"
-            onmouseenter={(e) =>
-                ((e.currentTarget as HTMLElement).style.background = planner.theme.contextHover)}
-            onmouseleave={(e) => ((e.currentTarget as HTMLElement).style.background = '')}
-            onclick={copyByIntro}>复制（按变奏分行）</button
-        >
+        {@render menuItem(copyDirect, '直接复制')}
+        {@render menuItem(copyByChar, '复制（按角色分行）')}
+        {@render menuItem(copyByIntro, '复制（按变奏分行）')}
     </div>
 {/if}

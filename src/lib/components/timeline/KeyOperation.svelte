@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { KeyOperation, Theme } from '$lib/types'
     import { MODE_LABELS } from '$lib/data/labels'
+    import { showModeLabel } from '$lib/utils/keyops'
     import KeyIcon from './KeyIcon.svelte'
     import StrongBadge from './StrongBadge.svelte'
 
@@ -15,11 +16,6 @@
     } = $props()
 
     let modeColors = $derived(theme.modeColors)
-
-    function showModeLabel(): boolean {
-        if (op.key === 'LMB' && op.mode === 'hold') return false
-        return op.mode !== 'click'
-    }
 </script>
 
 {#if op.mode === 'click'}
@@ -31,7 +27,7 @@
         {/if}
         <KeyIcon key={op.key} size="sm" color={theme.nodeColors[op.key]} />
     </div>
-{:else if showModeLabel()}
+{:else if showModeLabel(op)}
     <div
         class="inline-flex items-center rounded-sm relative"
         style="border: 1px solid {modeColors[

@@ -3,7 +3,9 @@
     import type { Character, CharacterPreset } from '$lib/types'
     import { loadCharacterPresets, getCharacterPresets } from '$lib/data/characters'
     import { planner } from '$lib/stores/planner.svelte'
+    import { findCharWithPreset } from '$lib/utils/characters'
     import CharacterPicker from './CharacterPicker.svelte'
+    import Modal from '$lib/components/ui/Modal.svelte'
 
     let {
         character,
@@ -50,12 +52,8 @@
     )
     let avatarFailed = $state(false)
 
-    function findCharWithPreset(presetId: string): Character | undefined {
-        return planner.characters.find((c) => c.id !== character.id && c.presetId === presetId)
-    }
-
     function selectPreset(presetId: string) {
-        const existing = findCharWithPreset(presetId)
+        const existing = findCharWithPreset(planner.characters, character.id, presetId)
         if (existing) {
             swapPending = {
                 targetCharId: existing.id,
@@ -124,37 +122,23 @@
         selectedId={character.presetId ?? ''}
         onselect={selectPreset}
         onclose={handleClose}
-    >
-        {#if swapPending}
-            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-            <div
-                class="absolute inset-0 z-10 flex items-center justify-center rounded-xl"
-                style="background: {planner.theme.overlayBackdrop};"
-                onclick={(e) => e.stopPropagation()}
-            >
-                <div
-                    class="mx-4 w-72 rounded-lg p-5 shadow-xl"
-                    style="border: 1px solid {planner.theme.contextBorder}; background: {planner
-                        .theme.contextBg};"
-                >
-                    <p class="mb-4 text-center text-sm" style="color: {planner.theme.text};">
-                        {swapPending.targetName} 已选择该角色，是否交换？
-                    </p>
-                    <div class="flex justify-center gap-3">
-                        <button
-                            class="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors"
-                            style="background: {planner.theme.accentText};"
-                            onclick={confirmSwap}>交换</button
-                        >
-                        <button
-                            class="rounded-lg px-5 py-2 text-sm font-semibold transition-colors"
-                            style="background: {planner.theme.buttonBg}; color: {planner.theme
-                                .buttonText};"
-                            onclick={cancelSwap}>取消</button
-                        >
-                    </div>
-                </div>
-            </div>
-        {/if}
-    </CharacterPicker>
+    />
 {/if}
+
+<Modal open={swapPending !== null} title="交换角色" onclose={cancelSwap}>
+    <p class="mb-4 text-center text-sm" style="color: {planner.theme.text};">
+        {swapPending?.targetName} 已选择该角色，是否交换？
+    </p>
+    <div class="flex justify-center gap-3">
+        <button
+            class="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors"
+            style="background: {planner.theme.accentText};"
+            onclick={confirmSwap}>交换</button
+        >
+        <button
+            class="rounded-lg px-5 py-2 text-sm font-semibold transition-colors"
+            style="background: {planner.theme.buttonBg}; color: {planner.theme.buttonText};"
+            onclick={cancelSwap}>取消</button
+        >
+    </div>
+</Modal>

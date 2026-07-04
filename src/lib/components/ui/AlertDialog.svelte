@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fade, scale } from 'svelte/transition'
     import { dialog } from '$lib/stores/dialog.svelte'
     import { planner } from '$lib/stores/planner.svelte'
 
@@ -13,6 +14,7 @@
         style="background: {t.overlayBackdrop};"
         onclick={() => {}}
         onkeydown={() => {}}
+        transition:fade={{ duration: 150 }}
     >
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -20,6 +22,7 @@
             class="w-full sm:w-80 rounded-t-xl sm:rounded-lg p-5 shadow-2xl"
             style="border: 1px solid {t.modalBorder}; background: {t.modalBg};"
             onclick={(e) => e.stopPropagation()}
+            transition:scale={{ duration: 200, start: 0.92 }}
         >
             <div class="mb-4 text-sm leading-relaxed" style="color: {t.text};">
                 {s.message}

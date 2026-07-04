@@ -161,12 +161,25 @@ export function getMergedTimeline(
     return result
 }
 
-export function buildTextDescription(items: TimelineItem[]): string {
+function buildTextParts(items: TimelineItem[]): string[] {
     const parts: string[] = []
     const lastCharIdx = new Map<string, number>()
     for (let i = 0; i < items.length; i++) {
         const item = items[i]
         const ops = opsText(item.block.keyOps, hasStrongIntro(item.block.keyOps))
+        if (!ops && hasOnlyEmptyOps(item.block.keyOps)) {
+            if (i === 0) {
+                parts.push(`${item.alias}先手`)
+            } else if (item.isSwitchIntro) {
+                parts.push(`，延奏${item.alias}`)
+            } else if (item.isSwitchStay) {
+                parts.push(`，切回${item.alias}`)
+            } else {
+                parts.push(`，切${item.alias}`)
+            }
+            lastCharIdx.set(item.block.characterId, parts.length - 1)
+            continue
+        }
         if (!ops) continue
         if (i === 0) {
             parts.push(`${item.alias}${ops}`)
@@ -192,7 +205,17 @@ export function buildTextDescription(items: TimelineItem[]): string {
             lastCharIdx.set(item.block.characterId, parts.length - 1)
         }
     }
-    return parts.join('')
+    return parts
+}
+
+export function buildTextDescription(items: TimelineItem[]): string {
+    return buildTextParts(items).join('')
+}
+
+export function buildCharLines(items: TimelineItem[]): string {
+    return buildTextParts(items)
+        .map((p) => p.replace(/^，/, ''))
+        .join('\n')
 }
 
 function visibleOps(ops: KeyOperation[]): KeyOperation[] {
@@ -201,6 +224,11 @@ function visibleOps(ops: KeyOperation[]): KeyOperation[] {
 
 function hasStrongIntro(ops: KeyOperation[]): boolean {
     return ops.some((op) => op.key === 'intro' && op.strong)
+}
+
+function hasOnlyEmptyOps(ops: KeyOperation[]): boolean {
+    const nonIntro = ops.filter((op) => op.key !== 'intro')
+    return nonIntro.length > 0 && nonIntro.every((op) => op.key === 'V')
 }
 
 function opsText(ops: KeyOperation[], strongIntro = false): string {
@@ -220,40 +248,16 @@ function opsText(ops: KeyOperation[], strongIntro = false): string {
     return ' ' + prefix + s
 }
 
-export function buildCharLines(
-    characters: Character[],
-    items: TimelineItem[],
-    presets: CharacterPreset[],
-): string {
-    const resolvedAliases = resolveCharAliases(characters, presets)
-    const lines: string[] = []
-    for (let ci = 0; ci < characters.length; ci++) {
-        const charItems = items.filter((it) => it.charIndex === ci)
-        if (charItems.length === 0) continue
-        const alias = resolvedAliases[ci]
-        const ops = charItems
-            .map((it, i) => {
-                const opStr = opsText(it.block.keyOps, hasStrongIntro(it.block.keyOps))
-                if (i === 0) return opStr
-                if (it.isSwitchIntro) return `，延奏${alias}${opStr}`
-                if (it.isSwitchStay) return `，切回${alias}${opStr}`
-                if (it.block.characterId !== charItems[i - 1].block.characterId)
-                    return `，${alias}${opStr}`
-                return opStr
-            })
-            .join('')
-        lines.push(`${alias}：${ops}`)
-    }
-    return lines.join('\n')
-}
-
 export function buildIntroLines(items: TimelineItem[]): string {
     const segments: { text: string; charId: string }[] = []
     let current: string[] = []
     let currentCharId = ''
     for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        const opStr = opsText(item.block.keyOps, hasStrongIntro(item.block.keyOps))
+        let opStr = opsText(item.block.keyOps, hasStrongIntro(item.block.keyOps))
+        if (!opStr && hasOnlyEmptyOps(item.block.keyOps)) {
+            opStr = '先手'
+        }
         const prev = i > 0 ? items[i - 1] : null
         if (item.block.isOffHand) {
             for (let s = segments.length - 1; s >= 0; s--) {

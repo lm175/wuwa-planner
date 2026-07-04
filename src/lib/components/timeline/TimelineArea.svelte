@@ -5,7 +5,8 @@
     import ArrowOverlay from './ArrowOverlay.svelte'
     import TimelineContextMenu from './TimelineContextMenu.svelte'
     import Avatar from '../character/Avatar.svelte'
-    import { getPrevBlock } from '$lib/utils/timeline'
+    import { getPrevBlock, canBeIntro } from '$lib/utils/timeline'
+    import { notification } from '$lib/stores/notification.svelte'
 
     let {
         selectedKey,
@@ -158,24 +159,6 @@
         planner.selectBlock(block.id)
     }
 
-    function getPrevBlockLocal(block: ActionBlock): ActionBlock | null {
-        return getPrevBlock(block, planner.blocks)
-    }
-
-    function stayFieldWithPrevLocal(block: ActionBlock): boolean {
-        const prev = getPrevBlockLocal(block)
-        if (!prev) return false
-        return planner.stayFieldMarkers.some(
-            (m) => m.fromBlockId === prev.id && m.toBlockId === block.id,
-        )
-    }
-
-    function canBeIntro(block: ActionBlock): boolean {
-        const earlier = planner.blocks.filter((b) => b.x < block.x).toSorted((a, b) => b.x - a.x)
-        if (earlier.length === 0) return true
-        return earlier[0].characterId !== block.characterId
-    }
-
     let hasPrevContext = $derived(
         contextBlock ? !!getPrevBlock(contextBlock, planner.blocks) : false,
     )
@@ -187,7 +170,7 @@
             (m) => m.fromBlockId === prev.id && m.toBlockId === contextBlock!.id,
         )
     })
-    let canToggleIntro = $derived(contextBlock ? canBeIntro(contextBlock) : false)
+    let canToggleIntro = $derived(contextBlock ? canBeIntro(contextBlock, planner.blocks) : false)
 
     function handleReorderKeyOps(
         blockId: string,
@@ -215,44 +198,59 @@
     }
 
     function toggleStayField(block: ActionBlock) {
-        const prev = getPrevBlockLocal(block)
+        const prev = getPrevBlock(block, planner.blocks)
         if (!prev) return
         const existing = planner.stayFieldMarkers.find(
             (m) => m.fromBlockId === prev.id && m.toBlockId === block.id,
         )
         if (existing) {
-            planner.removeStayFieldMarker(existing.id)
             if (block.isOffHand) {
                 planner.updateBlock(block.id, { isOffHand: false })
+                notification.show('已清除留场，自动取消脱手')
             }
+            planner.removeStayFieldMarker(existing.id)
         } else {
-            planner.addStayFieldMarker(block.characterId, prev.id, block.id)
             if (block.isIntro) {
                 planner.updateBlock(block.id, {
                     isIntro: false,
                     keyOps: block.keyOps.filter((op) => op.key !== 'intro'),
                 })
+                notification.show('已建立留场，自动取消变奏入场')
             }
+            planner.addStayFieldMarker(block.characterId, prev.id, block.id)
         }
     }
 
     function toggleIntro(block: ActionBlock) {
-        if (!canBeIntro(block)) return
+        if (!canBeIntro(block, planner.blocks)) return
         if (block.isIntro) {
             planner.updateBlock(block.id, {
                 isIntro: false,
                 keyOps: block.keyOps.filter((op) => op.key !== 'intro'),
             })
         } else {
-            const prev = getPrevBlockLocal(block)
-            if (prev) {
-                const existing = planner.stayFieldMarkers.find(
-                    (m) => m.fromBlockId === prev.id && m.toBlockId === block.id,
-                )
-                if (existing) planner.removeStayFieldMarker(existing.id)
+            const prev = getPrevBlock(block, planner.blocks)
+            const existing = prev
+                ? planner.stayFieldMarkers.find(
+                      (m) => m.fromBlockId === prev.id && m.toBlockId === block.id,
+                  )
+                : null
+            if (existing) {
+                planner.removeStayFieldMarker(existing.id)
+            }
+            if (block.isOffHand) {
+                planner.updateBlock(block.id, { isOffHand: false })
+            }
+            if (existing && block.isOffHand) {
+                notification.show('已设为变奏入场，自动取消留场和脱手')
+            } else if (existing) {
+                notification.show('已设为变奏入场，自动取消留场')
+            } else if (block.isOffHand) {
+                notification.show('已设为变奏入场，自动取消脱手')
             }
             planner.updateBlock(block.id, {
                 isIntro: true,
+                isOffHand: false,
                 keyOps: [{ key: 'intro', mode: 'click' }, ...block.keyOps],
             })
         }
@@ -354,8 +352,14 @@
             hasPrev={hasPrevContext}
             {stayFieldActive}
             {canToggleIntro}
-            onToggleStayField={toggleStayField}
-            onToggleIntro={toggleIntro}
+            onToggleStayField={(block) => {
+                toggleStayField(block)
+                contextBlock = null
+            }}
+            onToggleIntro={(block) => {
+                toggleIntro(block)
+                contextBlock = null
+            }}
             onToggleOffHand={handleToggleOffHand}
             onDeleteBlock={(id) => {
                 planner.removeBlock(id)
@@ -399,46 +403,29 @@
         </div>
     {/snippet}
 
+    {#snippet scrollBtn(dir: number, label: string)}
+        <button
+            class="flex flex-1 h-9 items-center justify-center rounded text-lg font-bold transition-colors"
+            style="border: 1px solid {planner.theme.border}; color: {planner.theme
+                .textSecondary}; background: {planner.theme.panelBg};"
+            onmouseenter={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background = planner.theme.buttonHover
+                ;(e.currentTarget as HTMLElement).style.color = planner.theme.text
+            }}
+            onmouseleave={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background = planner.theme.panelBg
+                ;(e.currentTarget as HTMLElement).style.color = planner.theme.textSecondary
+            }}
+            onpointerdown={(e) => e.preventDefault()}
+            onclick={() => scrollContainer?.scrollBy({ left: dir, behavior: 'smooth' })}
+            >{label}</button
+        >
+    {/snippet}
+
     {#if isMobile}
         <div class="flex items-center justify-center gap-2 shrink-0 pb-2 px-2">
-            <button
-                class="flex flex-1 h-9 items-center justify-center rounded text-lg font-bold transition-colors"
-                style="border: 1px solid {planner.theme.border}; color: {planner.theme
-                    .textSecondary}; background: {planner.theme.panelBg};"
-                onmouseenter={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.background = planner.theme.buttonHover
-                    ;(e.currentTarget as HTMLElement).style.color = planner.theme.text
-                }}
-                onmouseleave={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.background = planner.theme.panelBg
-                    ;(e.currentTarget as HTMLElement).style.color = planner.theme.textSecondary
-                }}
-                onpointerdown={(e) => e.preventDefault()}
-                onclick={() =>
-                    scrollContainer?.scrollBy({
-                        left: -Math.round(clientWidth * 0.2),
-                        behavior: 'smooth',
-                    })}>‹</button
-            >
-            <button
-                class="flex flex-1 h-9 items-center justify-center rounded text-lg font-bold transition-colors"
-                style="border: 1px solid {planner.theme.border}; color: {planner.theme
-                    .textSecondary}; background: {planner.theme.panelBg};"
-                onmouseenter={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.background = planner.theme.buttonHover
-                    ;(e.currentTarget as HTMLElement).style.color = planner.theme.text
-                }}
-                onmouseleave={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.background = planner.theme.panelBg
-                    ;(e.currentTarget as HTMLElement).style.color = planner.theme.textSecondary
-                }}
-                onpointerdown={(e) => e.preventDefault()}
-                onclick={() =>
-                    scrollContainer?.scrollBy({
-                        left: Math.round(clientWidth * 0.2),
-                        behavior: 'smooth',
-                    })}>›</button
-            >
+            {@render scrollBtn(-Math.round(clientWidth * 0.2), '‹')}
+            {@render scrollBtn(Math.round(clientWidth * 0.2), '›')}
         </div>
     {/if}
 </div>

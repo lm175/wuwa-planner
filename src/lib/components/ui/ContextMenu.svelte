@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { scale } from 'svelte/transition'
+
     interface ContextMenuItem {
         label: string
         action: () => void
@@ -50,6 +52,7 @@
         bind:this={ref}
         class="fixed z-50 min-w-36 rounded-lg border border-zinc-700 bg-zinc-800 py-1 shadow-xl"
         style="left: {adjX}px; top: {adjY}px;"
+        transition:scale={{ duration: 100, start: 0.95 }}
     >
         {#each items as item}
             <button

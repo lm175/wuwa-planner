@@ -52,10 +52,6 @@
     let initialNodeColors = $state<Record<string, string>>({})
     let initialModeColors = $state<Record<string, string>>({})
 
-    function getPresetNameLocal(presetId: string): string {
-        return getPresetName(allPresets, presetId)
-    }
-
     function initForm() {
         formData = {}
         for (const k of COLOR_FIELDS) {
@@ -88,7 +84,7 @@
                 if (url) {
                     avatarEntries.push({
                         presetId,
-                        name: getPresetNameLocal(presetId),
+                        name: getPresetName(allPresets, presetId),
                         avatarUrl: url,
                     })
                 }
@@ -130,7 +126,7 @@
         if (avatarEntries.some((e) => e.presetId === presetId)) return
         avatarEntries = [
             ...avatarEntries,
-            { presetId, name: getPresetNameLocal(presetId), avatarUrl: '' },
+            { presetId, name: getPresetName(allPresets, presetId), avatarUrl: '' },
         ]
     }
 

@@ -7,6 +7,7 @@
     import { isInputFocused } from '$lib/utils/planner'
     import Sidebar from './Sidebar.svelte'
     import AlertDialog from './ui/AlertDialog.svelte'
+    import NotificationBar from './ui/NotificationBar.svelte'
     import TimelineArea from './timeline/TimelineArea.svelte'
     import ActionPalette from './timeline/ActionPalette.svelte'
     import CharacterSelect from './character/CharacterSelect.svelte'
@@ -543,6 +544,7 @@
     </div>
 
     <AlertDialog />
+    <NotificationBar />
 
     <Modal open={themeManagerOpen} title="主题管理" onclose={() => (themeManagerOpen = false)}>
         <ThemeManager onclose={() => (themeManagerOpen = false)} />

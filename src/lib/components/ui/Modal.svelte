@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fade, scale } from 'svelte/transition'
     import { planner } from '$lib/stores/planner.svelte'
 
     let {
@@ -24,10 +25,12 @@
         role="dialog"
         aria-modal="true"
         tabindex="-1"
+        transition:fade={{ duration: 150 }}
     >
         <div
             class="w-full sm:w-auto sm:min-w-80 max-w-lg rounded-t-xl sm:rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto"
             style="border: 1px solid {t.modalBorder}; background: {t.modalBg};"
+            transition:scale={{ duration: 200, start: 0.92 }}
         >
             {#if title}
                 <div
